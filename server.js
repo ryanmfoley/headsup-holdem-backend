@@ -13,6 +13,9 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(passport.initialize())
 
+// Controllers //
+app.use('/api/users', require('./controllers/users'))
+
 const { PORT } = process.env
 
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`))
