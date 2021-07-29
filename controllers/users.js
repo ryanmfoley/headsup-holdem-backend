@@ -43,7 +43,7 @@ router.post('/login', (req, res) => {
 	User.findOne({ username }).then((user) => {
 		// Check for user //
 		if (!user) {
-			return res.status(404).json({ email: 'User not found' })
+			return res.status(404).json({ userNotFound: true })
 		}
 
 		// Check Password //
@@ -62,7 +62,7 @@ router.post('/login', (req, res) => {
 			}
 
 			// Password incorrect //
-			return res.status(400).json({ password: 'Password incorrect' })
+			return res.status(400).json({ invalidPassword: true })
 		})
 	})
 })
