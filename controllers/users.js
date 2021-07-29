@@ -18,14 +18,14 @@ router.post('/register', (req, res) => {
 			return res.status(400).json({ username: 'Username already exists' })
 		}
 
+		// Hash Password //
 		bcrypt.genSalt(10, (err, salt) => {
 			bcrypt.hash(password, salt, (err, hash) => {
 				if (err) throw err
 
-				const newUser = new User({ username, password })
-				newUser.password = hash
-				newUser
-					.save()
+				req.body.password = hash
+
+				User.create(req.body)
 					.then((user) => res.json(user))
 					.catch((err) => console.log(err))
 			})
@@ -66,5 +66,16 @@ router.post('/login', (req, res) => {
 		})
 	})
 })
+
+router.get(
+	'/current',
+	passport.authenticate('jwt', { session: false }),
+	(req, res) => {
+		res.json({
+			// id: req.user.id,
+			username: req.user.username,
+		})
+	}
+)
 
 module.exports = router

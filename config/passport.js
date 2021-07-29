@@ -9,7 +9,7 @@ options.secretOrKey = process.env.secretOrKey
 
 module.exports = (passport) =>
 	passport.use(
-		new Strategy(opts, (payload, done) =>
+		new Strategy(options, (payload, done) =>
 			User.findById(payload.id)
 				.then((user) => (user ? done(null, user) : done(null, false)))
 				.catch((err) => console.log(err))
