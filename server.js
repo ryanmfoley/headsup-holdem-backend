@@ -49,6 +49,8 @@ io.on('connection', (socket) => {
 	socket.on('joinGame', (id) => {
 		// Join socket to a given room //
 		socket.join(id)
+
+		// socket.on('')
 	})
 
 	socket.on('updatePlayersWaiting', (id) => {

@@ -17,8 +17,4 @@ const addPlayer = (playersWaiting, newPlayer) => {
 const removePlayer = (playersWaiting, id) =>
 	playersWaiting.filter((player) => player.id !== id)
 
-module.exports = {
-	Player,
-	addPlayer,
-	removePlayer,
-}
+export { Player, addPlayer, removePlayer }
