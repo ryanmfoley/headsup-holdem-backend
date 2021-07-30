@@ -36,8 +36,34 @@ class Dealer extends Deck {
 		return playersHandValue
 	}
 
-	isStraight(playersHand) {
-		let playersHandValue
+	isStraight(hand) {
+		let sortedHand = hand.sort((a, b) => a.value - b.value)
+
+		function allConsecutives(hand) {
+			for (let i = 0; i < hand.length - 1; i++) {
+				if (hand[i + 1].value - hand[i].value !== 1) return false
+			}
+			return true
+		}
+
+		// Check for consecutive values //
+		let isStraight = allConsecutives(sortedHand)
+
+		// Check for 5-high straight //
+		if (!isStraight && sortedHand.some((card) => card.value === 14)) {
+			// Change Ace value to 1 for low //
+			sortedHand = sortedHand.map((card) => {
+				if (card.value === 14) card.value = 1
+				return card
+			})
+
+      // Sort Values //
+			sortedHand = sortedHand.sort((a, b) => a.value - b.value)
+
+			isStraight = allConsecutives(sortedHand)
+		}
+
+		const playersHandValue = isStraight ? 100 : 0
 
 		return playersHandValue
 	}
@@ -95,6 +121,9 @@ class Dealer extends Deck {
 
 const dealer = new Dealer()
 
-dealer.shuffle()
+dealer.buildDeck()
 
-console.log(dealer.cards)
+// console.log(dealer.cards)
+
+// NOTES //
+// acount for A-5 and 10-A straight

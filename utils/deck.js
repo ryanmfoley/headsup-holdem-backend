@@ -5,13 +5,13 @@ class Deck {
 
 	buildDeck() {
 		const suits = ['Spades', 'Hearts', 'Clubs', 'Diamonds']
-		const ranks = ['A', 2, 3, 4, 5, 6, 7, 8, 9, 'J', 'Q', 'K']
+		const ranks = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']
 
-		for (let suit of suits) {
-			for (let rank of ranks) {
-				this.cards.push({ rank, suit })
-			}
-		}
+		suits.forEach((suit) =>
+			ranks.forEach((rank, index) => {
+				this.cards.push({ rank, suit, value: index + 2 })
+			})
+		)
 	}
 
 	// Fisher-Yates algorithm for shuffling cards //
@@ -26,7 +26,5 @@ class Deck {
 		}
 	}
 }
-
-// const deck = new Deck()
 
 module.exports = Deck
