@@ -1,7 +1,6 @@
-function Player(id, username, room = id) {
+function Player(id, username) {
 	this.id = id
 	this.username = username
-	this.room = room
 }
 
 const addPlayer = (playersWaiting, newPlayer) => {
@@ -17,8 +16,4 @@ const addPlayer = (playersWaiting, newPlayer) => {
 const removePlayer = (playersWaiting, id) =>
 	playersWaiting.filter((player) => player.id !== id)
 
-module.exports = {
-	Player,
-	addPlayer,
-	removePlayer,
-}
+module.exports = { Player, addPlayer, removePlayer }
