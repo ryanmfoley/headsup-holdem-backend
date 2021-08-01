@@ -152,26 +152,43 @@ class Dealer {
 
 	isTrips(hand) {
 		const cardCounts = {}
+		let handValue = 0
 
 		// Count occurences of each rank //
-		hand.forEach(({ rank }) => (cardCounts[rank] = (cardCounts[rank] || 0) + 1))
+		hand.forEach(
+			({ value }) => (cardCounts[value] = (cardCounts[value] || 0) + 1)
+		)
 
-		const counts = Object.values(cardCounts)
-		const isTrips = counts.includes(3)
-		const handValue = isTrips ? 700 : 0
+		for (let i in cardCounts) {
+			if (cardCounts[i] == 3) handValue = Number(i) * 36
+		}
+
+		if (!handValue) return handValue
+
+		handValue += this.isHighCard(hand)
 
 		return handValue
 	}
 
 	isTwoPair(hand) {
 		const cardCounts = {}
+		const pairs = {}
 
 		// Count occurences of each rank //
-		hand.forEach(({ rank }) => (cardCounts[rank] = (cardCounts[rank] || 0) + 1))
+		hand.forEach(
+			({ value }) => (cardCounts[value] = (cardCounts[value] || 0) + 1)
+		)
 
-		const counts = Object.values(cardCounts)
-		const isTwoPair = counts.filter((card) => card === 2).length === 2
-		const handValue = isTwoPair ? 200 : 0
+		for (let i in cardCounts) {
+			if (cardCounts[i] == 2) pairs[i] = cardCounts[i]
+		}
+
+		const highPair = Math.max.apply(null, Object.keys(pairs))
+		const twoPairValue = highPair * 5
+
+		if (!Object.keys(pairs).length) return 0
+
+		const handValue = twoPairValue + this.isHighCard(hand)
 
 		return handValue
 	}
@@ -180,48 +197,41 @@ class Dealer {
 		const cardCounts = {}
 
 		// Count occurences of each rank //
-		hand.forEach(({ rank }) => (cardCounts[rank] = (cardCounts[rank] || 0) + 1))
+		hand.forEach(
+			({ value }) => (cardCounts[value] = (cardCounts[value] || 0) + 1)
+		)
 
-		const counts = Object.values(cardCounts)
-		const isPair = counts.includes(2)
-		const handValue = isPair ? 100 : 0
+		for (let i in cardCounts) {
+			if (cardCounts[i] == 2) return Number(i) + this.isHighCard(hand)
+		}
 
-		return handValue
+		return 0
 	}
 
 	isHighCard(hand) {
 		const cardValues = hand.map(({ value }) => value)
-		const handValue = Math.max.apply(null, cardValues)
+		const sortedValues = cardValues.sort((a, b) => b - a)
+
+		const value = sortedValues.join('')
+		const handValue = Number('.' + value)
 
 		return handValue
 	}
 
-	calculateHandValues(playerOnesHand, playerTwosHand) {
-		const playerOnesHandValue =
-			this.isRoyalFlush(playerOnesHand) ||
-			this.isStraightFlush(playerOnesHand) ||
-			this.isFourOfAKind(playerOnesHand) ||
-			this.isFullHouse(playerOnesHand) ||
-			this.isFlush(playerOnesHand) ||
-			this.isStraight(playerOnesHand) ||
-			this.isTrips(playerOnesHand) ||
-			this.isTwoPair(playerOnesHand) ||
-			this.isPair(playerOnesHand) ||
-			this.isHighCard(playerOnesHand)
+	calculateHandValue(hand) {
+		const handValue =
+			this.isRoyalFlush(hand) ||
+			this.isStraightFlush(hand) ||
+			this.isFourOfAKind(hand) ||
+			this.isFullHouse(hand) ||
+			this.isFlush(hand) ||
+			this.isStraight(hand) ||
+			this.isTrips(hand) ||
+			this.isTwoPair(hand) ||
+			this.isPair(hand) ||
+			this.isHighCard(hand)
 
-		const playerTwosHandValue =
-			this.isRoyalFlush(playerTwosHand) ||
-			this.isStraightFlush(playerTwosHand) ||
-			this.isFourOfAKind(playerTwosHand) ||
-			this.isFullHouse(playerTwosHand) ||
-			this.isFlush(playerTwosHand) ||
-			this.isStraight(playerTwosHand) ||
-			this.isTrips(playerTwosHand) ||
-			this.isTwoPair(playerTwosHand) ||
-			this.isPair(playerTwosHand) ||
-			this.isHighCard(playerTwosHand)
-
-		return { playerOnesHandValue, playerTwosHandValue }
+		return handValue
 	}
 }
 
