@@ -27,18 +27,19 @@ app.use('/api/users', require('./controllers/users'))
 // Run when client connects //
 io.on('connection', (socket) => {
 	const { Player, addPlayer, removePlayer } = require('./utils/players')
+	const Dealer = require('./utils/dealer')
 
 	let playersWaiting = []
 
 	// Send player data and waiting list to client //
-	socket.on('enterLobby', (username) => {
+	socket.once('enterLobby', (username) => {
 		const player = new Player(socket.id, username)
 
 		socket.emit('enterLobby', player)
 		socket.emit('playersWaiting', playersWaiting)
 	})
 
-	socket.on('createGame', (player) => {
+	socket.once('createGame', (player) => {
 		// Add player to waiting list //
 		playersWaiting = addPlayer(playersWaiting, player)
 
@@ -46,18 +47,36 @@ io.on('connection', (socket) => {
 		io.emit('playersWaiting', playersWaiting)
 	})
 
-	socket.on('joinGame', (id) => {
-		// Join socket to a given room //
-		socket.join(id)
-
-		// socket.on('')
-	})
-
 	socket.on('updatePlayersWaiting', (id) => {
 		// Remove player from waiting list //
 		playersWaiting = removePlayer(playersWaiting, id)
 
 		io.emit('playersWaiting', playersWaiting)
+	})
+
+	socket.on('enterPokerRoom', ({ id, currentPlayer }) => {
+		// Join socket to a given room //
+		socket.join(id)
+
+		// Second player joined //
+		if (currentPlayer.id !== id) io.to(id).emit('startGame')
+
+		socket.once('getPlayersInfo', (player) =>
+			// socket.to(id).emit('getPlayersInfo', player)
+			io.to(id).emit('getPlayersInfo', player)
+		)
+
+		socket.on('deal', () => {
+			const dealer = new Dealer()
+			dealer.shuffleDeck()
+
+			// Deal cards //
+			const holeCards = dealer.dealHoleCards()
+			const communityCards = dealer.dealCommunityCards()
+
+			socket.to(id).emit('dealHoleCards', holeCards)
+			io.to(id).emit('dealCommunityCards', communityCards)
+		})
 	})
 
 	socket.on('logout', (id) => {

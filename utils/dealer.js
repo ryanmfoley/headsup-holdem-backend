@@ -1,39 +1,101 @@
-const Deck = require('./deck')
-
-class Dealer extends Deck {
+class Dealer {
 	constructor() {
-		super()
-		this.communityCards = []
+		this.cards = []
 	}
 
-	dealCards(deck, num) {
-		this.communityCards = []
+	buildDeck() {
+		const suits = ['spades', 'hearts', 'clubs', 'diamonds']
+		const ranks = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']
 
-		for (let i = 1; i < num; i++) this.communityCards.push(deck.cards.pop())
+		suits.forEach((suit, suitIndex) => {
+			const color = suit === 'spades' || suit === 'clubs' ? 'black' : 'red'
+			let symbol
+			switch (suit) {
+				case 'spades':
+					symbol = '♠️'
+					break
+				case 'hearts':
+					symbol = '♥️'
+					break
+				case 'clubs':
+					symbol = '♣️'
+					break
+				case 'diamonds':
+					symbol = '♦️'
+					break
+			}
+
+			ranks.forEach((rank, rankIndex) => {
+				this.cards.push({
+					id: `${suitIndex}${rankIndex}`,
+					rank,
+					suit,
+					value: rankIndex + 2,
+					color,
+					symbol,
+				})
+			})
+		})
 	}
 
-	isRoyalFlush(playersHand) {
+	// Fisher-Yates algorithm for shuffling cards //
+	shuffleDeck() {
+		this.buildDeck()
+
+		for (let i = this.cards.length - 1; i > 0; i--) {
+			let j = Math.floor(Math.random() * (i + 1))
+			let x = this.cards[i]
+			this.cards[i] = this.cards[j]
+			this.cards[j] = x
+		}
+	}
+
+	dealHoleCards() {
+		const cards = []
+
+		// Deal 2 cards //
+		cards.push(this.cards.pop())
+		cards.push(this.cards.pop())
+
+		return cards
+	}
+
+	dealCommunityCards() {
+		const cards = []
+
+		// Deal 5 cards //
+		for (let i = 1; i <= 5; i++) {
+			cards.push(this.cards.pop())
+		}
+
+		return cards
+	}
+
+	isRoyalFlush(hand) {
+		const isBroadWay = hand.every((card) => card.value >= 10)
+		const isRoyalFlush = isBroadway && this.isFlush(hand)
+
+		const handValue = isRoyalFlush ? 1000 : 0
+	}
+
+	isStraightFlush(hand) {
+		const isStraightFlush = this.isStraight(hand) && this.isFlush(hand)
+
+		const handValue = isStraightFlush ? 500 : 0
+	}
+
+	isFullHouse(hand) {
 		let playersHandValue
 
 		return playersHandValue
 	}
 
-	isStraightFlush(playersHand) {
-		let playersHandValue
+	isFlush(hand) {
+		const isFlush = hand.every((card) => card.suit === hand[0].suit)
 
-		return playersHandValue
-	}
+		const handValue = isFlush ? 200 : 0
 
-	isFullHouse(playersHand) {
-		let playersHandValue
-
-		return playersHandValue
-	}
-
-	isFlush(playersHand) {
-		let playersHandValue
-
-		return playersHandValue
+		return handValue
 	}
 
 	isStraight(hand) {
@@ -57,36 +119,36 @@ class Dealer extends Deck {
 				return card
 			})
 
-      // Sort Values //
+			// Sort Values //
 			sortedHand = sortedHand.sort((a, b) => a.value - b.value)
 
 			isStraight = allConsecutives(sortedHand)
 		}
 
-		const playersHandValue = isStraight ? 100 : 0
+		const handValue = isStraight ? 100 : 0
 
-		return playersHandValue
+		return handValue
 	}
 
-	isTrips(playersHand) {
+	isTrips(hand) {
 		let playersHandValue
 
 		return playersHandValue
 	}
 
-	isTwoPair(playersHand) {
+	isTwoPair(hand) {
 		let playersHandValue
 
 		return playersHandValue
 	}
 
-	isPair(playersHand) {
+	isPair(hand) {
 		let playersHandValue
 
 		return playersHandValue
 	}
 
-	isHighCard(playersHand) {
+	isHighCard(hand) {
 		let playersHandValue
 
 		return playersHandValue
@@ -119,11 +181,4 @@ class Dealer extends Deck {
 	}
 }
 
-const dealer = new Dealer()
-
-dealer.buildDeck()
-
-// console.log(dealer.cards)
-
-// NOTES //
-// acount for A-5 and 10-A straight
+module.exports = Dealer

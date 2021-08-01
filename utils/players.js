@@ -1,7 +1,6 @@
-function Player(id, username, room = id) {
+function Player(id, username) {
 	this.id = id
 	this.username = username
-	this.room = room
 }
 
 const addPlayer = (playersWaiting, newPlayer) => {
