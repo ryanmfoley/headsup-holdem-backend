@@ -27,10 +27,9 @@ class Dealer {
 
 			ranks.forEach((rank, rankIndex) => {
 				this.cards.push({
-					id: `${suitIndex}${rankIndex}`,
 					rank,
 					suit,
-					value: rankIndex + 2,
+					value: (rankIndex + 2).toString(),
 					color,
 					symbol,
 				})
@@ -235,4 +234,6 @@ class Dealer {
 	}
 }
 
-module.exports = Dealer
+const dealer = new Dealer()
+
+module.exports = dealer

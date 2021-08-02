@@ -21,16 +21,14 @@ require('./config/passport')(passport)
 // Controllers //
 app.use('/api/users', require('./controllers/users'))
 
+const { Player, addPlayer, removePlayer } = require('./utils/players')
+let playersWaiting = []
+
 //______________________________________________________________
 // START SOCKET CONNECTION HERE
 
 // Run when client connects //
 io.on('connection', (socket) => {
-	const { Player, addPlayer, removePlayer } = require('./utils/players')
-	const Dealer = require('./utils/dealer')
-
-	let playersWaiting = []
-
 	// Send player data and waiting list to client //
 	socket.once('enterLobby', (username) => {
 		const player = new Player(socket.id, username)
@@ -54,29 +52,38 @@ io.on('connection', (socket) => {
 		io.emit('playersWaiting', playersWaiting)
 	})
 
-	socket.on('enterPokerRoom', ({ id, currentPlayer }) => {
+	socket.once('enterPokerRoom', ({ id, currentPlayer }) => {
 		// Join socket to a given room //
 		socket.join(id)
 
 		// Second player joined //
 		if (currentPlayer.id !== id) io.to(id).emit('startGame')
 
-		socket.once('getPlayersInfo', (player) =>
-			// socket.to(id).emit('getPlayersInfo', player)
-			io.to(id).emit('getPlayersInfo', player)
+		socket.on('getPlayersInfo', (player) =>
+			socket.to(id).emit('getPlayersInfo', player)
 		)
 
 		socket.on('deal', () => {
-			const dealer = new Dealer()
+			const dealer = require('./utils/dealer')
 			dealer.shuffleDeck()
 
-			// Deal cards //
-			const holeCards = dealer.dealHoleCards()
+			// Deal community cards //
 			const communityCards = dealer.dealCommunityCards()
 
-			socket.to(id).emit('dealHoleCards', holeCards)
-			io.to(id).emit('dealCommunityCards', communityCards)
+			// Deal hole cards //
+			const playerOneHoleCards = dealer.dealHoleCards()
+			const playerTwoHoleCards = dealer.dealHoleCards()
+
+			io.to(id).emit('deal', {
+				playerOneHoleCards,
+				playerTwoHoleCards,
+				communityCards,
+			})
 		})
+
+		// socket.on('bet', () => {
+		// 	io.to(id).emit('bet')
+		// })
 	})
 
 	socket.on('logout', (id) => {
