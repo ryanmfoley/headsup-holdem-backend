@@ -4,10 +4,10 @@ if (process.env.NODE_ENV !== 'production') {
 
 const express = require('express')
 const app = express()
+const server = app.listen(process.env.PORT)
+const io = require('socket.io')(server, { cors: true })
 const passport = require('passport')
 const cors = require('cors')
-const server = require('http').createServer(app)
-const io = require('socket.io')(server, { cors: true })
 
 // Middleware //
 app.use(express.json())
@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: false }))
 app.use(passport.initialize())
 app.use(cors())
 
-// Passport Config
+// Passport Config //
 require('./config/passport')(passport)
 
 // Controllers //
@@ -52,15 +52,15 @@ io.on('connection', (socket) => {
 		io.emit('playersWaiting', playersWaiting)
 	})
 
-	socket.once('enterPokerRoom', ({ id, currentPlayer }) => {
+	socket.once('enterPokerRoom', (roomId, currentPlayer) => {
 		// Join socket to a given room //
-		socket.join(id)
+		socket.join(roomId)
 
 		// Second player joined //
-		if (currentPlayer.id !== id) io.to(id).emit('startGame')
+		if (currentPlayer.id !== roomId) io.to(roomId).emit('startGame')
 
-		socket.on('getPlayersInfo', (player) =>
-			socket.to(id).emit('getPlayersInfo', player)
+		socket.once('getPlayersInfo', (player) =>
+			io.to(roomId).emit('getPlayersInfo', player)
 		)
 
 		socket.on('deal', () => {
@@ -74,16 +74,17 @@ io.on('connection', (socket) => {
 			const playerOneHoleCards = dealer.dealHoleCards()
 			const playerTwoHoleCards = dealer.dealHoleCards()
 
-			io.to(id).emit('deal', {
+			io.to(roomId).emit(
+				'deal',
 				playerOneHoleCards,
 				playerTwoHoleCards,
-				communityCards,
-			})
+				communityCards
+			)
 		})
 
-		// socket.on('bet', () => {
-		// 	io.to(id).emit('bet')
-		// })
+		socket.on('action', (action, bet) => {
+			io.to(roomId).emit('action', action, bet)
+		})
 	})
 
 	socket.on('logout', (id) => {
@@ -93,7 +94,3 @@ io.on('connection', (socket) => {
 		io.emit('playersWaiting', playersWaiting)
 	})
 })
-
-const { PORT } = process.env
-
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`))

@@ -39,6 +39,7 @@ class Dealer {
 
 	// Fisher-Yates algorithm for shuffling cards //
 	shuffleDeck() {
+		this.cards = []
 		this.buildDeck()
 
 		for (let i = this.cards.length - 1; i > 0; i--) {
