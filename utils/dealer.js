@@ -50,23 +50,10 @@ class Dealer {
 		}
 	}
 
-	dealHoleCards() {
+	dealCards(num) {
 		const cards = []
 
-		// Deal 2 cards //
-		cards.push(this.cards.pop())
-		cards.push(this.cards.pop())
-
-		return cards
-	}
-
-	dealCommunityCards() {
-		const cards = []
-
-		// Deal 5 cards //
-		for (let i = 1; i <= 5; i++) {
-			cards.push(this.cards.pop())
-		}
+		for (let i = 0; i < num; i++) cards.push(this.cards.pop())
 
 		return cards
 	}

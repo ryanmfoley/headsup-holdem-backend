@@ -67,19 +67,20 @@ io.on('connection', (socket) => {
 			const dealer = require('./utils/dealer')
 			dealer.shuffleDeck()
 
-			// Deal community cards //
-			const communityCards = dealer.dealCommunityCards()
-
 			// Deal hole cards //
-			const playerOneHoleCards = dealer.dealHoleCards()
-			const playerTwoHoleCards = dealer.dealHoleCards()
+			const playerOneHoleCards = dealer.dealCards(2)
+			const playerTwoHoleCards = dealer.dealCards(2)
 
-			io.to(roomId).emit(
-				'deal',
-				playerOneHoleCards,
-				playerTwoHoleCards,
-				communityCards
-			)
+			io.to(roomId).emit('dealPreFlop', playerOneHoleCards, playerTwoHoleCards)
+
+			// Deal community cards //
+			const flop = dealer.dealCards(3)
+			const turn = dealer.dealCards(1)
+			const river = dealer.dealCards(1)
+
+			socket.once('dealFlop', () => io.to(roomId).emit('dealFlop', flop))
+			socket.once('dealTurn', () => io.to(roomId).emit('dealTurn', turn))
+			socket.once('dealRiver', () => io.to(roomId).emit('dealRiver', river))
 		})
 
 		socket.on('action', (action, bet) => {
