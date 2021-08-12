@@ -59,7 +59,7 @@ class Dealer {
 	}
 
 	isRoyalFlush(hand) {
-		const isBroadWay = hand.every((card) => card.value >= 10)
+		const isBroadway = hand.every((card) => card.value >= 10)
 		const isRoyalFlush = isBroadway && this.isFlush(hand)
 
 		const handValue = isRoyalFlush ? 10000 : 0
@@ -197,12 +197,27 @@ class Dealer {
 
 	isHighCard(hand) {
 		const cardValues = hand.map(({ value }) => value)
+
 		const sortedValues = cardValues.sort((a, b) => b - a)
 
 		const value = sortedValues.join('')
 		const handValue = Number('.' + value)
 
 		return handValue
+	}
+
+	getPokerHandCombos(cards) {
+		let pokerHands = []
+
+		for (let i = 0; i < 7; i++) {
+			for (let j = 6; j > i; j--) {
+				pokerHands.push(
+					cards.filter((card) => card !== cards[i] && card !== cards[j])
+				)
+			}
+		}
+
+		return pokerHands
 	}
 
 	calculateHandValue(hand) {
@@ -220,8 +235,34 @@ class Dealer {
 
 		return handValue
 	}
+
+	getBestHand(cards) {
+		const hands = this.getPokerHandCombos(cards)
+
+		const maxHandValue = hands.reduce((acc, hand) => {
+			const handValue = this.calculateHandValue(hand)
+
+			return acc > handValue ? acc : handValue
+		})
+
+		return maxHandValue
+	}
 }
 
 const dealer = new Dealer()
+
+// const cards = [
+// 	{ rank: 2, suit: 'spades', value: '2' },
+// 	{ rank: 2, suit: 'hearts', value: '2' },
+// 	{ rank: 3, suit: 'clubs', value: '3' },
+// 	{ rank: 3, suit: 'diamonds', value: '3' },
+// 	{ rank: 3, suit: 'spades', value: '3' },
+// 	{ rank: 8, suit: 'hearts', value: '8' },
+// 	{ rank: 9, suit: 'spades', value: '9' },
+// ]
+
+// const res = dealer.getBestHand(cards)
+
+// console.log(res)
 
 module.exports = dealer
