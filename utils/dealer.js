@@ -68,7 +68,7 @@ class Dealer {
 	isStraightFlush(hand) {
 		const isStraightFlush = this.isStraight(hand) && this.isFlush(hand)
 
-		const handValue = isStraightFlush ? 7000 : 0
+		const handValue = isStraightFlush ? 7000 + this.isHighCard(hand) : 0
 	}
 
 	isFourOfAKind(hand) {
@@ -79,7 +79,7 @@ class Dealer {
 
 		const counts = Object.values(cardCounts)
 		const isFourOfAKind = counts.includes(4)
-		const handValue = isFourOfAKind ? 5000 : 0
+		const handValue = isFourOfAKind ? 5000 + this.isHighCard(hand) : 0
 
 		return handValue
 	}
@@ -92,7 +92,7 @@ class Dealer {
 
 		const counts = Object.values(cardCounts)
 		const isFullHouse = counts.includes(2) && counts.includes(3)
-		const handValue = isFullHouse ? 3000 : 0
+		const handValue = isFullHouse ? 3000 + this.isHighCard(hand) : 0
 
 		return handValue
 	}
@@ -100,7 +100,7 @@ class Dealer {
 	isFlush(hand) {
 		const isFlush = hand.every((card) => card.suit === hand[0].suit)
 
-		const handValue = isFlush ? 1500 : 0
+		const handValue = isFlush ? 1500 + this.isHighCard(hand) : 0
 
 		return handValue
 	}
@@ -132,7 +132,7 @@ class Dealer {
 			isStraight = allConsecutives(sortedHand)
 		}
 
-		const handValue = isStraight ? 1000 : 0
+		const handValue = isStraight ? 1000 + this.isHighCard(hand) : 0
 
 		return handValue
 	}
@@ -250,19 +250,5 @@ class Dealer {
 }
 
 const dealer = new Dealer()
-
-// const cards = [
-// 	{ rank: 2, suit: 'spades', value: '2' },
-// 	{ rank: 2, suit: 'hearts', value: '2' },
-// 	{ rank: 3, suit: 'clubs', value: '3' },
-// 	{ rank: 3, suit: 'diamonds', value: '3' },
-// 	{ rank: 3, suit: 'spades', value: '3' },
-// 	{ rank: 8, suit: 'hearts', value: '8' },
-// 	{ rank: 9, suit: 'spades', value: '9' },
-// ]
-
-// const res = dealer.getBestHand(cards)
-
-// console.log(res)
 
 module.exports = dealer
