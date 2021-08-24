@@ -53,6 +53,10 @@ io.on('connection', (socket) => {
 	})
 
 	socket.once('enterPokerRoom', (roomId, currentPlayer) => {
+		// I can join another room for playerOne and playerTwo //////////////////////////////
+		socket.player = currentPlayer
+		// const thisPlayer = currentPlayer
+
 		// Join socket to a given room //
 		socket.join(roomId)
 
@@ -60,7 +64,7 @@ io.on('connection', (socket) => {
 		if (currentPlayer.id !== roomId) io.to(roomId).emit('startGame')
 
 		socket.once('getPlayersInfo', (player) =>
-			io.to(roomId).emit('getPlayersInfo', player)
+			socket.to(roomId).emit('getPlayersInfo', player)
 		)
 
 		socket.on('deal', () => {
@@ -71,7 +75,8 @@ io.on('connection', (socket) => {
 			const playerOneHoleCards = dealer.dealCards(2)
 			const playerTwoHoleCards = dealer.dealCards(2)
 
-			io.to(roomId).emit('dealPreFlop', playerOneHoleCards, playerTwoHoleCards)
+			socket.emit('dealPreFlop', playerOneHoleCards)
+			socket.to(roomId).emit('dealPreFlop', playerTwoHoleCards)
 
 			// Deal community cards //
 			const flop = dealer.dealCards(3)
@@ -83,8 +88,41 @@ io.on('connection', (socket) => {
 			socket.once('dealRiver', () => io.to(roomId).emit('dealRiver', river))
 		})
 
-		socket.on('action', (action, bet) => {
-			io.to(roomId).emit('action', action, bet)
+		socket.on('fold', () =>
+			io.to(roomId).emit('handIsOver', { losingPlayer: socket.player })
+		)
+
+		socket.on('check', () =>
+			io.to(roomId).emit('check', { player: socket.player })
+		)
+
+		socket.on('call', (callAmount) =>
+			io.to(roomId).emit('call', {
+				playerCalling: socket.player.username,
+				callAmount,
+			})
+		)
+
+		socket.on('bet', ({ betAmount }) =>
+			io.to(roomId).emit('bet', {
+				playerBetting: socket.player.username,
+				betAmount,
+			})
+		)
+
+		socket.on('raise', ({ callAmount, raiseAmount }) =>
+			io.to(roomId).emit('raise', {
+				playerRaising: socket.player.username,
+				callAmount,
+				raiseAmount,
+			})
+		)
+
+		// socket.once('showDown', () => {})
+
+		socket.on('handIsOver', () => {
+			console.log('handIsOver')
+			io.to(roomId).emit('handIsOver')
 		})
 	})
 
