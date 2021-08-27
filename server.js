@@ -4,10 +4,10 @@ if (process.env.NODE_ENV !== 'production') {
 
 const express = require('express')
 const app = express()
+const server = app.listen(process.env.PORT)
+const io = require('socket.io')(server, { cors: true })
 const passport = require('passport')
 const cors = require('cors')
-const server = require('http').createServer(app)
-const io = require('socket.io')(server, { cors: true })
 
 // Middleware //
 app.use(express.json())
@@ -15,22 +15,20 @@ app.use(express.urlencoded({ extended: false }))
 app.use(passport.initialize())
 app.use(cors())
 
-// Passport Config
+// Passport Config //
 require('./config/passport')(passport)
 
 // Controllers //
 app.use('/api/users', require('./controllers/users'))
+
+const { Player, addPlayer, removePlayer } = require('./utils/players')
+let playersWaiting = []
 
 //______________________________________________________________
 // START SOCKET CONNECTION HERE
 
 // Run when client connects //
 io.on('connection', (socket) => {
-	const { Player, addPlayer, removePlayer } = require('./utils/players')
-	const Dealer = require('./utils/dealer')
-
-	let playersWaiting = []
-
 	// Send player data and waiting list to client //
 	socket.once('enterLobby', (username) => {
 		const player = new Player(socket.id, username)
@@ -54,28 +52,106 @@ io.on('connection', (socket) => {
 		io.emit('playersWaiting', playersWaiting)
 	})
 
-	socket.on('enterPokerRoom', ({ id, currentPlayer }) => {
-		// Join socket to a given room //
-		socket.join(id)
+	socket.once('enterPokerRoom', (roomId, currentPlayer) => {
+		socket.player = currentPlayer
 
-		// Second player joined //
-		if (currentPlayer.id !== id) io.to(id).emit('startGame')
+		// Join socket to a given room //
+		socket.join(roomId)
+
+		if (currentPlayer.id !== roomId) io.to(roomId).emit('startGame')
 
 		socket.once('getPlayersInfo', (player) =>
-			// socket.to(id).emit('getPlayersInfo', player)
-			io.to(id).emit('getPlayersInfo', player)
+			socket.to(roomId).emit('getPlayersInfo', player)
 		)
 
 		socket.on('deal', () => {
-			const dealer = new Dealer()
+			const dealer = require('./utils/dealer')
+
 			dealer.shuffleDeck()
 
-			// Deal cards //
-			const holeCards = dealer.dealHoleCards()
-			const communityCards = dealer.dealCommunityCards()
+			// Deal hole cards //
+			const playerOneHoleCards = dealer.dealCards(2)
+			const playerTwoHoleCards = dealer.dealCards(2)
 
-			socket.to(id).emit('dealHoleCards', holeCards)
-			io.to(id).emit('dealCommunityCards', communityCards)
+			socket.emit('dealPreFlop', playerOneHoleCards)
+			socket.to(roomId).emit('dealPreFlop', playerTwoHoleCards)
+
+			// Deal community cards //
+			const flop = dealer.dealCards(3)
+			const turn = dealer.dealCards(1)
+			const river = dealer.dealCards(1)
+
+			socket.once('dealFlop', () => io.to(roomId).emit('dealFlop', flop))
+			socket.once('dealTurn', () => io.to(roomId).emit('dealTurn', turn))
+			socket.once('dealRiver', () => io.to(roomId).emit('dealRiver', river))
+		})
+
+		socket.on('fold', () =>
+			io.to(roomId).emit('handIsOver', { losingPlayer: socket.player })
+		)
+
+		socket.on('check', () =>
+			io.to(roomId).emit('check', { player: socket.player })
+		)
+
+		socket.on('call', ({ playersChips, opponentsChips, callAmount }) =>
+			io.to(roomId).emit('call', {
+				playerCalling: socket.player.username,
+				playersChips,
+				opponentsChips,
+				callAmount,
+			})
+		)
+
+		socket.on('bet', ({ playersChips, opponentsChips, betAmount }) =>
+			io.to(roomId).emit('bet', {
+				playerBetting: socket.player.username,
+				playersChips,
+				opponentsChips,
+				betAmount,
+			})
+		)
+
+		socket.on(
+			'raise',
+			({ playersChips, opponentsChips, callAmount, raiseAmount }) =>
+				io.to(roomId).emit('raise', {
+					playerRaising: socket.player.username,
+					playersChips,
+					opponentsChips,
+					callAmount,
+					raiseAmount,
+				})
+		)
+
+		// Listen to handIsOver event emitted by host //
+		socket.on('handIsOver', () => io.to(roomId).emit('handIsOver'))
+
+		// Listen to showdown event emitted by both players sending holecards //
+		socket.on('showdown', (holeCards) =>
+			// Send opponents holeCards to other player //
+			socket.to(roomId).emit('determineWinner', holeCards)
+		)
+
+		// Listen to determineWinner event emitted by opponent //
+		socket.on('determineWinner', ({ playerOnesHand, playerTwosHand }) => {
+			const dealer = require('./utils/dealer')
+			let winner
+			let isDraw = false
+
+			// Host is playerOne and opponent is playerTwo //
+			const playerOnesHandValue = dealer.getValueOfBestHand(playerOnesHand)
+			const playerTwosHandValue = dealer.getValueOfBestHand(playerTwosHand)
+
+			if (playerOnesHandValue > playerTwosHandValue) {
+				winner = 'playerOne'
+			} else if (playerOnesHandValue < playerTwosHandValue) {
+				winner = 'playerTwo'
+			} else {
+				isDraw = true
+			}
+
+			io.to(roomId).emit('handResults', { winner, isDraw })
 		})
 	})
 
@@ -86,7 +162,3 @@ io.on('connection', (socket) => {
 		io.emit('playersWaiting', playersWaiting)
 	})
 })
-
-const { PORT } = process.env
-
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`))
