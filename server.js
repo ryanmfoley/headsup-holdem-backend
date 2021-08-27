@@ -53,14 +53,11 @@ io.on('connection', (socket) => {
 	})
 
 	socket.once('enterPokerRoom', (roomId, currentPlayer) => {
-		// I can join another room for playerOne and playerTwo //////////////////////////////
 		socket.player = currentPlayer
-		// const thisPlayer = currentPlayer
 
 		// Join socket to a given room //
 		socket.join(roomId)
 
-		// Second player joined //
 		if (currentPlayer.id !== roomId) io.to(roomId).emit('startGame')
 
 		socket.once('getPlayersInfo', (player) =>
@@ -69,6 +66,7 @@ io.on('connection', (socket) => {
 
 		socket.on('deal', () => {
 			const dealer = require('./utils/dealer')
+
 			dealer.shuffleDeck()
 
 			// Deal hole cards //
@@ -96,33 +94,64 @@ io.on('connection', (socket) => {
 			io.to(roomId).emit('check', { player: socket.player })
 		)
 
-		socket.on('call', (callAmount) =>
+		socket.on('call', ({ playersChips, opponentsChips, callAmount }) =>
 			io.to(roomId).emit('call', {
 				playerCalling: socket.player.username,
+				playersChips,
+				opponentsChips,
 				callAmount,
 			})
 		)
 
-		socket.on('bet', ({ betAmount }) =>
+		socket.on('bet', ({ playersChips, opponentsChips, betAmount }) =>
 			io.to(roomId).emit('bet', {
 				playerBetting: socket.player.username,
+				playersChips,
+				opponentsChips,
 				betAmount,
 			})
 		)
 
-		socket.on('raise', ({ callAmount, raiseAmount }) =>
-			io.to(roomId).emit('raise', {
-				playerRaising: socket.player.username,
-				callAmount,
-				raiseAmount,
-			})
+		socket.on(
+			'raise',
+			({ playersChips, opponentsChips, callAmount, raiseAmount }) =>
+				io.to(roomId).emit('raise', {
+					playerRaising: socket.player.username,
+					playersChips,
+					opponentsChips,
+					callAmount,
+					raiseAmount,
+				})
 		)
 
-		// socket.once('showDown', () => {})
+		// Listen to handIsOver event emitted by host //
+		socket.on('handIsOver', () => io.to(roomId).emit('handIsOver'))
 
-		socket.on('handIsOver', () => {
-			console.log('handIsOver')
-			io.to(roomId).emit('handIsOver')
+		// Listen to showdown event emitted by both players sending holecards //
+		socket.on('showdown', (holeCards) =>
+			// Send opponents holeCards to other player //
+			socket.to(roomId).emit('determineWinner', holeCards)
+		)
+
+		// Listen to determineWinner event emitted by opponent //
+		socket.on('determineWinner', ({ playerOnesHand, playerTwosHand }) => {
+			const dealer = require('./utils/dealer')
+			let winner
+			let isDraw = false
+
+			// Host is playerOne and opponent is playerTwo //
+			const playerOnesHandValue = dealer.getValueOfBestHand(playerOnesHand)
+			const playerTwosHandValue = dealer.getValueOfBestHand(playerTwosHand)
+
+			if (playerOnesHandValue > playerTwosHandValue) {
+				winner = 'playerOne'
+			} else if (playerOnesHandValue < playerTwosHandValue) {
+				winner = 'playerTwo'
+			} else {
+				isDraw = true
+			}
+
+			io.to(roomId).emit('handResults', { winner, isDraw })
 		})
 	})
 
