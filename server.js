@@ -52,7 +52,7 @@ io.on('connection', (socket) => {
 		io.emit('playersWaiting', playersWaiting)
 	})
 
-	socket.once('enterPokerRoom', (roomId, currentPlayer) => {
+	socket.once('enterPokerRoom', ({ roomId, currentPlayer }) => {
 		socket.player = currentPlayer
 
 		// Join socket to a given room //
