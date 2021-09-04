@@ -94,34 +94,15 @@ io.on('connection', (socket) => {
 			io.to(roomId).emit('check', { player: socket.player })
 		)
 
-		socket.on('call', ({ playersChips, opponentsChips, callAmount }) =>
-			io.to(roomId).emit('call', {
-				playerCalling: socket.player.username,
-				playersChips,
-				opponentsChips,
+		socket.on('call', (callAmount) => io.to(roomId).emit('call', callAmount))
+
+		socket.on('bet', ({ betAmount }) => io.to(roomId).emit('bet', betAmount))
+
+		socket.on('raise', ({ callAmount, raiseAmount }) =>
+			io.to(roomId).emit('raise', {
 				callAmount,
+				raiseAmount,
 			})
-		)
-
-		socket.on('bet', ({ playersChips, opponentsChips, betAmount }) =>
-			io.to(roomId).emit('bet', {
-				playerBetting: socket.player.username,
-				playersChips,
-				opponentsChips,
-				betAmount,
-			})
-		)
-
-		socket.on(
-			'raise',
-			({ playersChips, opponentsChips, callAmount, raiseAmount }) =>
-				io.to(roomId).emit('raise', {
-					playerRaising: socket.player.username,
-					playersChips,
-					opponentsChips,
-					callAmount,
-					raiseAmount,
-				})
 		)
 
 		// Listen to handIsOver event emitted by host //
