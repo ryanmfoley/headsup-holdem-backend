@@ -86,9 +86,13 @@ io.on('connection', (socket) => {
 			socket.once('dealRiver', () => io.to(roomId).emit('dealRiver', river))
 		})
 
-		socket.on('fold', () =>
-			io.to(roomId).emit('handIsOver', { losingPlayer: socket.player })
-		)
+		socket.on('fold', () => {
+			const winningPlayer = socket.player.isPlayerOne
+				? 'playerTwo'
+				: 'playerOne'
+
+			io.to(roomId).emit('handResults', { winningPlayer })
+		})
 
 		socket.on('check', () =>
 			io.to(roomId).emit('check', { player: socket.player })
@@ -117,7 +121,7 @@ io.on('connection', (socket) => {
 		// Listen to determineWinner event emitted by opponent //
 		socket.on('determineWinner', ({ playerOnesHand, playerTwosHand }) => {
 			const dealer = require('./utils/dealer')
-			let winner
+			let winningPlayer
 			let isDraw = false
 
 			// Host is playerOne and opponent is playerTwo //
@@ -125,14 +129,14 @@ io.on('connection', (socket) => {
 			const playerTwosHandValue = dealer.getValueOfBestHand(playerTwosHand)
 
 			if (playerOnesHandValue > playerTwosHandValue) {
-				winner = 'playerOne'
+				winningPlayer = 'playerOne'
 			} else if (playerOnesHandValue < playerTwosHandValue) {
-				winner = 'playerTwo'
+				winningPlayer = 'playerTwo'
 			} else {
 				isDraw = true
 			}
 
-			io.to(roomId).emit('handResults', { winner, isDraw })
+			io.to(roomId).emit('handResults', { winningPlayer, isDraw })
 		})
 	})
 
