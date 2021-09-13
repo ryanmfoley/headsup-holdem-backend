@@ -30,38 +30,38 @@ let playersWaiting = []
 // Run when client connects //
 io.on('connection', (socket) => {
 	// Send player data and waiting list to client //
-	socket.once('enterLobby', (username) => {
+	socket.once('enter-lobby', (username) => {
 		const player = new Player(socket.id, username)
 
-		socket.emit('enterLobby', player)
-		socket.emit('playersWaiting', playersWaiting)
+		socket.emit('enter-lobby', player)
+		socket.emit('players-waiting', playersWaiting)
 	})
 
-	socket.once('createGame', (player) => {
+	socket.once('create-game', (player) => {
 		// Add player to waiting list //
 		playersWaiting = addPlayer(playersWaiting, player)
 
 		// Send list of players waiting to client //
-		io.emit('playersWaiting', playersWaiting)
+		io.emit('players-waiting', playersWaiting)
 	})
 
-	socket.on('updatePlayersWaiting', (id) => {
+	socket.on('update-players-waiting', (id) => {
 		// Remove player from waiting list //
 		playersWaiting = removePlayer(playersWaiting, id)
 
-		io.emit('playersWaiting', playersWaiting)
+		io.emit('players-waiting', playersWaiting)
 	})
 
-	socket.once('enterPokerRoom', ({ roomId, currentPlayer }) => {
+	socket.once('enter-poker-room', ({ roomId, currentPlayer }) => {
 		socket.player = currentPlayer
 
 		// Join socket to a given room //
 		socket.join(roomId)
 
-		if (currentPlayer.id !== roomId) io.to(roomId).emit('startGame')
+		if (currentPlayer.id !== roomId) io.to(roomId).emit('start-game')
 
-		socket.once('getPlayersInfo', (player) =>
-			socket.to(roomId).emit('getPlayersInfo', player)
+		socket.once('get-players-info', (player) =>
+			socket.to(roomId).emit('get-players-info', player)
 		)
 
 		socket.on('deal', () => {
@@ -73,17 +73,17 @@ io.on('connection', (socket) => {
 			const playerOneHoleCards = dealer.dealCards(2)
 			const playerTwoHoleCards = dealer.dealCards(2)
 
-			socket.emit('dealPreFlop', playerOneHoleCards)
-			socket.to(roomId).emit('dealPreFlop', playerTwoHoleCards)
+			socket.emit('deal-preflop', playerOneHoleCards)
+			socket.to(roomId).emit('deal-preflop', playerTwoHoleCards)
 
 			// Deal community cards //
 			const flop = dealer.dealCards(3)
 			const turn = dealer.dealCards(1)
 			const river = dealer.dealCards(1)
 
-			socket.once('dealFlop', () => io.to(roomId).emit('dealFlop', flop))
-			socket.once('dealTurn', () => io.to(roomId).emit('dealTurn', turn))
-			socket.once('dealRiver', () => io.to(roomId).emit('dealRiver', river))
+			socket.once('deal-flop', () => io.to(roomId).emit('deal-flop', flop))
+			socket.once('deal-turn', () => io.to(roomId).emit('deal-turn', turn))
+			socket.once('deal-river', () => io.to(roomId).emit('deal-river', river))
 		})
 
 		socket.on('fold', () => {
@@ -91,7 +91,7 @@ io.on('connection', (socket) => {
 				? 'playerTwo'
 				: 'playerOne'
 
-			io.to(roomId).emit('handResults', { winningPlayer })
+			io.to(roomId).emit('hand-results', { winningPlayer })
 		})
 
 		socket.on('check', () =>
@@ -110,33 +110,47 @@ io.on('connection', (socket) => {
 		)
 
 		// Listen to handIsOver event emitted by host //
-		socket.on('handIsOver', () => io.to(roomId).emit('handIsOver'))
+		socket.on('hand-is-over', () => io.to(roomId).emit('hand-is-over'))
 
 		// Listen to showdown event emitted by both players sending holecards //
 		socket.on('showdown', (holeCards) =>
 			// Send opponents holeCards to other player //
-			socket.to(roomId).emit('determineWinner', holeCards)
+			socket.to(roomId).emit('determine-winner', holeCards)
 		)
 
 		// Listen to determineWinner event emitted by opponent //
-		socket.on('determineWinner', ({ playerOnesHand, playerTwosHand }) => {
+		socket.on('determine-winner', ({ playerOnesHand, playerTwosHand }) => {
 			const dealer = require('./utils/dealer')
 			let winningPlayer
+			let winningHand
 			let isDraw = false
 
 			// Host is playerOne and opponent is playerTwo //
-			const playerOnesHandValue = dealer.getValueOfBestHand(playerOnesHand)
-			const playerTwosHandValue = dealer.getValueOfBestHand(playerTwosHand)
+			const playerOnesHandObj = dealer.getValueOfBestHand(playerOnesHand)
+			const playerTwosHandObj = dealer.getValueOfBestHand(playerTwosHand)
 
-			if (playerOnesHandValue > playerTwosHandValue) {
+			if (playerOnesHandObj.handValue > playerTwosHandObj.handValue) {
 				winningPlayer = 'playerOne'
-			} else if (playerOnesHandValue < playerTwosHandValue) {
+				winningHand = playerOnesHandObj.handType
+			} else if (playerOnesHandObj.handValue < playerTwosHandObj.handValue) {
 				winningPlayer = 'playerTwo'
+				winningHand = playerTwosHandObj.handType
 			} else {
 				isDraw = true
 			}
 
-			io.to(roomId).emit('handResults', { winningPlayer, isDraw })
+			io.to(roomId).emit('hand-results', { winningPlayer, winningHand, isDraw })
+		})
+
+		// Listen for messages from client
+		socket.on('send-chat-message', (message, clearMessage) => {
+			// Send messages to current users room
+			io.to(roomId).emit('chat-message', {
+				user: currentPlayer.username,
+				text: message,
+			})
+
+			clearMessage()
 		})
 	})
 
@@ -144,6 +158,6 @@ io.on('connection', (socket) => {
 		// Remove player from waiting list //
 		playersWaiting = removePlayer(playersWaiting, id)
 
-		io.emit('playersWaiting', playersWaiting)
+		io.emit('players-waiting', playersWaiting)
 	})
 })

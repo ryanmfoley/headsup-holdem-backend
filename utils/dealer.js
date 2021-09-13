@@ -62,19 +62,21 @@ class Dealer {
 		const MAX_STRAIGHT_FLUSH_VALUE = 8490523139
 		const isBroadway = hand.every((card) => card.value >= 10)
 		const isRoyalFlush = isBroadway && this.isFlush(hand)
-
+		const handType = 'Royal Flush'
 		const handValue = isRoyalFlush ? MAX_STRAIGHT_FLUSH_VALUE + 1 : 0
+
+		return handValue ? { handType, handValue } : 0
 	}
 
 	isStraightFlush(hand) {
 		const MAX_FOUR_OF_A_KIND_VALUE = 8359411030
 		const isStraightFlush = this.isStraight(hand) && this.isFlush(hand)
-
+		const handType = 'Straight Flush'
 		const handValue = isStraightFlush
-			? MAX_FOUR_OF_A_KIND_VALUE + this.isHighCard(hand)
+			? MAX_FOUR_OF_A_KIND_VALUE + this.isHighCard(hand).handValue
 			: 0
 
-		return handValue
+		return handValue ? { handType, handValue } : 0
 	}
 
 	isFourOfAKind(hand) {
@@ -86,11 +88,12 @@ class Dealer {
 
 		const counts = Object.values(cardCounts)
 		const isFourOfAKind = counts.includes(4)
+		const handType = 'Four Of A Kind'
 		const handValue = isFourOfAKind
-			? MAX_FULL_HOUSE_VALUE + this.isHighCard(hand)
+			? MAX_FULL_HOUSE_VALUE + this.isHighCard(hand).handValue
 			: 0
 
-		return handValue
+		return handValue ? { handType, handValue } : 0
 	}
 
 	isFullHouse(hand) {
@@ -102,18 +105,23 @@ class Dealer {
 
 		const counts = Object.values(cardCounts)
 		const isFullHouse = counts.includes(2) && counts.includes(3)
-		const handValue = isFullHouse ? MAX_FLUSH_VALUE + this.isHighCard(hand) : 0
+		const handType = 'Full House'
+		const handValue = isFullHouse
+			? MAX_FLUSH_VALUE + this.isHighCard(hand).handValue
+			: 0
 
-		return handValue
+		return handValue ? { handType, handValue } : 0
 	}
 
 	isFlush(hand) {
 		const MAX_STRAIGHT_VALUE = 5391817173
 		const isFlush = hand.every((card) => card.suit === hand[0].suit)
+		const handType = 'Flush'
+		const handValue = isFlush
+			? MAX_STRAIGHT_VALUE + this.isHighCard(hand).handValue
+			: 0
 
-		const handValue = isFlush ? MAX_STRAIGHT_VALUE + this.isHighCard(hand) : 0
-
-		return handValue
+		return handValue ? { handType, handValue } : 0
 	}
 
 	isStraight(hand) {
@@ -145,16 +153,18 @@ class Dealer {
 			isStraight = allConsecutives(sortedHand)
 		}
 
+		const handType = 'Straight'
 		const handValue = isStraight
 			? MAX_TRIPS_VALUE + this.isHighCard(handCopy)
 			: 0
 
-		return handValue
+		return handValue ? { handType, handValue } : 0
 	}
 
 	isTrips(hand) {
 		const MAX_TWO_PAIR_VALUE = 2967554631
 		const cardCounts = {}
+		const handType = 'Trips'
 		let handValue = 0
 
 		// Count occurences of each rank //
@@ -164,10 +174,11 @@ class Dealer {
 
 		for (let i in cardCounts) {
 			if (cardCounts[i] == 3)
-				handValue = Number(i) + this.isHighCard(hand) + MAX_TWO_PAIR_VALUE
+				handValue =
+					Number(i) + this.isHighCard(hand).handValue + MAX_TWO_PAIR_VALUE
 		}
 
-		return handValue
+		return handValue ? { handType, handValue } : 0
 	}
 
 	isTwoPair(hand) {
@@ -189,14 +200,17 @@ class Dealer {
 
 		if (Object.keys(pairs).length < 2) return 0
 
-		const handValue = twoPairValue + this.isHighCard(hand) + MAX_PAIR_VALUE
+		const handType = 'Two Pair'
+		const handValue =
+			twoPairValue + this.isHighCard(hand).handValue + MAX_PAIR_VALUE
 
-		return handValue
+		return handValue ? { handType, handValue } : 0
 	}
 
 	isPair(hand) {
 		const MAX_HIGH_CARD_VALUE = 141312119
 		const cardCounts = {}
+		const handType = 'Pair'
 
 		// Count occurences of each rank //
 		hand.forEach(
@@ -206,9 +220,9 @@ class Dealer {
 		for (let val in cardCounts) {
 			if (cardCounts[val] == 2) {
 				const handValue =
-					Number(val) + this.isHighCard(hand) + MAX_HIGH_CARD_VALUE
+					Number(val) + this.isHighCard(hand).handValue + MAX_HIGH_CARD_VALUE
 
-				return handValue
+				return { handType, handValue }
 			}
 		}
 
@@ -219,10 +233,12 @@ class Dealer {
 		// Create array of card values //
 		const stringCardValues = hand.map(({ value }) => value)
 
+		const handType = 'High Card'
+
 		// Combine string values and convert to integer //
 		const handValue = +stringCardValues.join('')
 
-		return handValue
+		return { handType, handValue }
 	}
 
 	getPokerHandCombos(cards) {
@@ -240,7 +256,7 @@ class Dealer {
 	}
 
 	calculateHandValue(hand) {
-		const handValue =
+		const { handType, handValue } =
 			this.isRoyalFlush(hand) ||
 			this.isStraightFlush(hand) ||
 			this.isFourOfAKind(hand) ||
@@ -252,19 +268,28 @@ class Dealer {
 			this.isPair(hand) ||
 			this.isHighCard(hand)
 
-		return handValue
+		return { handType, handValue }
 	}
 
 	getValueOfBestHand(cards) {
 		const hands = this.getPokerHandCombos(cards)
+		const bestHand = {}
 
-		const maxHandValue = hands.reduce((acc, hand) => {
-			const handValue = this.calculateHandValue(hand)
+		const bestHandValue = hands.reduce((acc, hand) => {
+			const { handType, handValue } = this.calculateHandValue(hand)
 
-			return acc > handValue ? acc : handValue
+			if (acc > handValue) {
+				return acc
+			} else {
+				bestHand.handType = handType
+
+				return handValue
+			}
 		})
+    
+		bestHand.handValue = bestHandValue
 
-		return maxHandValue
+		return bestHand
 	}
 }
 
