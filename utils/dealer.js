@@ -8,20 +8,25 @@ class Dealer {
 		const ranks = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']
 
 		suits.forEach((suit, suitIndex) => {
-			const color = suit === 'spades' || suit === 'clubs' ? 'black' : 'red'
+			let color
 			let symbol
+
 			switch (suit) {
 				case 'spades':
 					symbol = '♠️'
+					color = 'black'
 					break
 				case 'hearts':
 					symbol = '♥️'
+					color = 'red'
 					break
 				case 'clubs':
 					symbol = '♣️'
+					color = 'green'
 					break
 				case 'diamonds':
 					symbol = '♦️'
+					color = 'blue'
 					break
 			}
 
@@ -286,7 +291,7 @@ class Dealer {
 				return handValue
 			}
 		})
-    
+
 		bestHand.handValue = bestHandValue
 
 		return bestHand
