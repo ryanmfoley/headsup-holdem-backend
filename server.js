@@ -53,8 +53,6 @@ io.on('connection', (socket) => {
 	})
 
 	socket.once('enter-poker-room', ({ roomId, currentPlayer }) => {
-		socket.player = currentPlayer
-
 		// Join socket to a given room //
 		socket.join(roomId)
 
@@ -73,6 +71,15 @@ io.on('connection', (socket) => {
 			const playerOneHoleCards = dealer.dealCards(2)
 			const playerTwoHoleCards = dealer.dealCards(2)
 
+			// const playerOneHoleCards = [
+			// 	{ rank: 4, suit: 'spades', value: 4 },
+			// 	{ rank: 'Q', suit: 'hearts', value: 12 },
+			// ]
+			// const playerTwoHoleCards = [
+			// 	{ rank: 5, suit: 'clubs', value: 5 },
+			// 	{ rank: 'Q', suit: 'diamonds', value: 12 },
+			// ]
+
 			socket.emit('deal-preflop', playerOneHoleCards)
 			socket.to(roomId).emit('deal-preflop', playerTwoHoleCards)
 
@@ -86,16 +93,14 @@ io.on('connection', (socket) => {
 			socket.once('deal-river', () => io.to(roomId).emit('deal-river', river))
 		})
 
-		socket.on('fold', () => {
-			const winningPlayer = socket.player.isPlayerOne
-				? 'playerTwo'
-				: 'playerOne'
-
-			io.to(roomId).emit('hand-results', { winningPlayer })
-		})
+		socket.on('fold', () =>
+			io
+				.to(roomId)
+				.emit('hand-results', { losingPlayer: currentPlayer.username })
+		)
 
 		socket.on('check', () =>
-			io.to(roomId).emit('check', { player: socket.player })
+			io.to(roomId).emit('check', { player: currentPlayer })
 		)
 
 		socket.on('call', (callAmount) => io.to(roomId).emit('call', callAmount))
@@ -109,38 +114,52 @@ io.on('connection', (socket) => {
 			})
 		)
 
-		// Listen to handIsOver event emitted by host //
+		// Listen to hand-is-over event emitted by host //
 		socket.on('hand-is-over', () => io.to(roomId).emit('hand-is-over'))
 
 		// Listen to showdown event emitted by both players sending holecards //
 		socket.on('showdown', (holeCards) =>
-			// Send opponents holeCards to other player //
-			socket.to(roomId).emit('determine-winner', holeCards)
+			// Send opponents name and holeCards to other player //
+			socket.to(roomId).emit('determine-winner', {
+				username: currentPlayer.username,
+				holeCards,
+			})
 		)
 
-		// Listen to determineWinner event emitted by opponent //
-		socket.on('determine-winner', ({ playerOnesHand, playerTwosHand }) => {
-			const dealer = require('./utils/dealer')
-			let winningPlayer
-			let winningHand
-			let isDraw = false
+		// Listen to determine-winner event emitted by opponent //
+		socket.on(
+			'determine-winner',
+			({ opponentsName, playerOnesHand, playerTwosHand }) => {
+				const dealer = require('./utils/dealer')
+				let winningPlayer
+				let winningHand
+				let isDraw = false
 
-			// Host is playerOne and opponent is playerTwo //
-			const playerOnesHandObj = dealer.getValueOfBestHand(playerOnesHand)
-			const playerTwosHandObj = dealer.getValueOfBestHand(playerTwosHand)
+				// Host is playerOne and opponent is playerTwo //
+				const playerOnesHandObj = dealer.getValueOfBestHand(playerOnesHand)
+				const playerTwosHandObj = dealer.getValueOfBestHand(playerTwosHand)
 
-			if (playerOnesHandObj.handValue > playerTwosHandObj.handValue) {
-				winningPlayer = 'playerOne'
-				winningHand = playerOnesHandObj.handType
-			} else if (playerOnesHandObj.handValue < playerTwosHandObj.handValue) {
-				winningPlayer = 'playerTwo'
-				winningHand = playerTwosHandObj.handType
-			} else {
-				isDraw = true
+				if (playerOnesHandObj.handValue > playerTwosHandObj.handValue) {
+					// Current player wins //
+					winningPlayer = currentPlayer.username
+					winningHand = playerOnesHandObj.handType
+				} else if (playerOnesHandObj.handValue < playerTwosHandObj.handValue) {
+					// Oponnent wins //
+					winningPlayer = opponentsName
+					winningHand = playerTwosHandObj.handType
+				} else {
+					// Draw //
+					winningHand = playerOnesHandObj.handType
+					isDraw = true
+				}
+
+				io.to(roomId).emit('hand-results', {
+					winningPlayer,
+					winningHand,
+					isDraw,
+				})
 			}
-
-			io.to(roomId).emit('hand-results', { winningPlayer, winningHand, isDraw })
-		})
+		)
 
 		// Listen for messages from client
 		socket.on('send-chat-message', (message, clearMessage) => {
