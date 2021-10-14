@@ -7,39 +7,15 @@ class Dealer {
 		const suits = ['spades', 'hearts', 'clubs', 'diamonds']
 		const ranks = [2, 3, 4, 5, 6, 7, 8, 9, 10, 'J', 'Q', 'K', 'A']
 
-		suits.forEach((suit, suitIndex) => {
-			let color
-			let symbol
-
-			switch (suit) {
-				case 'spades':
-					symbol = '♠️'
-					color = 'black'
-					break
-				case 'hearts':
-					symbol = '♥️'
-					color = 'red'
-					break
-				case 'clubs':
-					symbol = '♣️'
-					color = 'green'
-					break
-				case 'diamonds':
-					symbol = '♦️'
-					color = 'blue'
-					break
-			}
-
-			ranks.forEach((rank, rankIndex) => {
+		suits.forEach((suit, suitIndex) =>
+			ranks.forEach((rank, rankIndex) =>
 				this.cards.push({
 					rank,
 					suit,
 					value: rankIndex + 2,
-					color,
-					symbol,
 				})
-			})
-		})
+			)
+		)
 	}
 
 	// Fisher-Yates algorithm for shuffling cards //
@@ -160,7 +136,7 @@ class Dealer {
 
 		const handType = 'Straight'
 		const handValue = isStraight
-			? MAX_TRIPS_VALUE + this.isHighCard(handCopy)
+			? MAX_TRIPS_VALUE + this.isHighCard(handCopy).handValue
 			: 0
 
 		return handValue ? { handType, handValue } : 0
@@ -299,5 +275,30 @@ class Dealer {
 }
 
 const dealer = new Dealer()
+
+// const hand1 = [
+// 	{ rank: 2, suit: 'spades', value: 2 },
+// 	{ rank: 3, suit: 'clubs', value: 3 },
+// 	{ rank: 9, suit: 'spades', value: 9 },
+// 	{ rank: 'K', suit: 'clubs', value: 13 },
+// 	{ rank: 4, suit: 'diamonds', value: 4 },
+// 	{ rank: 10, suit: 'hearts', value: 10 },
+// 	{ rank: 'J', suit: 'hearts', value: 11 },
+// ]
+
+// const hand2 = [
+// 	{ rank: 9, suit: 'diamonds', value: 9 },
+// 	{ rank: 'Q', suit: 'hearts', value: 12 },
+// 	{ rank: 9, suit: 'spades', value: 9 },
+// 	{ rank: 'K', suit: 'clubs', value: 13 },
+// 	{ rank: 4, suit: 'diamonds', value: 4 },
+// 	{ rank: 10, suit: 'hearts', value: 10 },
+// 	{ rank: 'J', suit: 'hearts', value: 11 },
+// ]
+
+// const res1 = dealer.getValueOfBestHand(hand1)
+// const res2 = dealer.getValueOfBestHand(hand2)
+
+// console.log({ res1, res2, res: res1 > res2 })
 
 module.exports = dealer
