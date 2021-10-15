@@ -71,15 +71,6 @@ io.on('connection', (socket) => {
 			const playerOneHoleCards = dealer.dealCards(2)
 			const playerTwoHoleCards = dealer.dealCards(2)
 
-			// const playerOneHoleCards = [
-			// 	{ rank: 4, suit: 'spades', value: 4 },
-			// 	{ rank: 'Q', suit: 'hearts', value: 12 },
-			// ]
-			// const playerTwoHoleCards = [
-			// 	{ rank: 5, suit: 'clubs', value: 5 },
-			// 	{ rank: 'Q', suit: 'diamonds', value: 12 },
-			// ]
-
 			socket.emit('deal-preflop', playerOneHoleCards)
 			socket.to(roomId).emit('deal-preflop', playerTwoHoleCards)
 
@@ -93,15 +84,15 @@ io.on('connection', (socket) => {
 			socket.once('deal-river', () => io.to(roomId).emit('deal-river', river))
 		})
 
-		socket.on('fold', () =>
-			io
-				.to(roomId)
-				.emit('hand-results', { losingPlayer: currentPlayer.username })
-		)
+		socket.on('fold', () => {
+			io.to(roomId).emit('fold')
 
-		socket.on('check', () =>
-			io.to(roomId).emit('check', { player: currentPlayer })
-		)
+			io.to(roomId).emit('hand-results', {
+				losingPlayer: currentPlayer.username,
+			})
+		})
+
+		socket.on('check', () => io.to(roomId).emit('check'))
 
 		socket.on('call', (callAmount) => io.to(roomId).emit('call', callAmount))
 
