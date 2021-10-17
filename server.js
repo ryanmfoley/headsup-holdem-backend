@@ -162,12 +162,13 @@ io.on('connection', (socket) => {
 
 			clearMessage()
 		})
-	})
 
-	socket.on('logout', (id) => {
-		// Remove player from waiting list //
-		playersWaiting = removePlayer(playersWaiting, id)
+		socket.on('logout', (id) => {
+			// Remove player from waiting list //
+			playersWaiting = removePlayer(playersWaiting, id)
 
-		io.emit('players-waiting', playersWaiting)
+			io.to(roomId).emit('opponent-left-game')
+			io.emit('players-waiting', playersWaiting)
+		})
 	})
 })
