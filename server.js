@@ -6,17 +6,12 @@ const express = require('express')
 const app = express()
 const server = app.listen(process.env.PORT)
 const io = require('socket.io')(server, { cors: true })
-const passport = require('passport')
 const cors = require('cors')
 
 // Middleware //
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
-app.use(passport.initialize())
 app.use(cors())
-
-// Passport Config //
-require('./config/passport')(passport)
 
 // Controllers //
 app.use('/api/users', require('./controllers/users'))
@@ -37,7 +32,7 @@ io.on('connection', (socket) => {
 		socket.emit('players-waiting', playersWaiting)
 	})
 
-	socket.once('create-game', (player) => {
+	socket.on('create-game', (player) => {
 		// Add player to waiting list //
 		playersWaiting = addPlayer(playersWaiting, player)
 
@@ -52,7 +47,7 @@ io.on('connection', (socket) => {
 		io.emit('players-waiting', playersWaiting)
 	})
 
-	socket.once('enter-poker-room', ({ roomId, currentPlayer }) => {
+	socket.on('enter-poker-room', ({ roomId, currentPlayer }) => {
 		// Join socket to a given room //
 		socket.join(roomId)
 
