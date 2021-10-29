@@ -33,7 +33,7 @@ io.on('connection', (socket) => {
 		socket.emit('players-waiting', playersWaiting)
 	})
 
-	socket.on('create-game', (player) => {
+	socket.once('create-game', (player) => {
 		// Add player to waiting list //
 		playersWaiting = addPlayer(playersWaiting, player)
 
@@ -48,7 +48,7 @@ io.on('connection', (socket) => {
 		io.emit('players-waiting', playersWaiting)
 	})
 
-	socket.on('enter-poker-room', ({ roomId, currentPlayer }) => {
+	socket.once('enter-poker-room', ({ roomId, currentPlayer }) => {
 		// Join socket to a given room //
 		socket.join(roomId)
 
