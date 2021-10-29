@@ -18,6 +18,7 @@ app.use('/api/users', require('./controllers/users'))
 
 const { Player, addPlayer, removePlayer } = require('./utils/players')
 let playersWaiting = []
+let roomId2
 
 //______________________________________________________________
 // START SOCKET CONNECTION HERE
@@ -51,10 +52,11 @@ io.on('connection', (socket) => {
 		// Join socket to a given room //
 		socket.join(roomId)
 
+		// Start game after second player joins //
 		if (currentPlayer.id !== roomId) io.to(roomId).emit('start-game')
 
-		socket.once('get-players-info', (player) =>
-			socket.to(roomId).emit('get-players-info', player)
+		socket.once('get-players-info', () =>
+			socket.to(roomId).emit('get-players-info', currentPlayer)
 		)
 
 		socket.on('deal', () => {
@@ -164,6 +166,8 @@ io.on('connection', (socket) => {
 
 			io.to(roomId).emit('opponent-left-game')
 			io.emit('players-waiting', playersWaiting)
+
+			socket.leave(roomId)
 		})
 	})
 })
