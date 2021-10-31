@@ -276,29 +276,4 @@ class Dealer {
 
 const dealer = new Dealer()
 
-// const hand1 = [
-// 	{ rank: 2, suit: 'spades', value: 2 },
-// 	{ rank: 3, suit: 'clubs', value: 3 },
-// 	{ rank: 9, suit: 'spades', value: 9 },
-// 	{ rank: 'K', suit: 'clubs', value: 13 },
-// 	{ rank: 4, suit: 'diamonds', value: 4 },
-// 	{ rank: 10, suit: 'hearts', value: 10 },
-// 	{ rank: 'J', suit: 'hearts', value: 11 },
-// ]
-
-// const hand2 = [
-// 	{ rank: 9, suit: 'diamonds', value: 9 },
-// 	{ rank: 'Q', suit: 'hearts', value: 12 },
-// 	{ rank: 9, suit: 'spades', value: 9 },
-// 	{ rank: 'K', suit: 'clubs', value: 13 },
-// 	{ rank: 4, suit: 'diamonds', value: 4 },
-// 	{ rank: 10, suit: 'hearts', value: 10 },
-// 	{ rank: 'J', suit: 'hearts', value: 11 },
-// ]
-
-// const res1 = dealer.getValueOfBestHand(hand1)
-// const res2 = dealer.getValueOfBestHand(hand2)
-
-// console.log({ res1, res2, res: res1 > res2 })
-
 module.exports = dealer
