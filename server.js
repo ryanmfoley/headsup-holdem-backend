@@ -76,9 +76,15 @@ io.on('connection', (socket) => {
 			const turn = dealer.dealCards(1)
 			const river = dealer.dealCards(1)
 
-			socket.once('deal-flop', () => io.to(roomId).emit('deal-flop', flop))
-			socket.once('deal-turn', () => io.to(roomId).emit('deal-turn', turn))
-			socket.once('deal-river', () => io.to(roomId).emit('deal-river', river))
+			socket.once('deal-flop', (deal) => {
+				if (deal) io.to(roomId).emit('deal-flop', flop)
+			})
+			socket.once('deal-turn', (deal) => {
+				if (deal) io.to(roomId).emit('deal-turn', turn)
+			})
+			socket.once('deal-river', (deal) => {
+				if (deal) io.to(roomId).emit('deal-river', river)
+			})
 		})
 
 		socket.on('fold', () => {
