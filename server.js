@@ -18,7 +18,6 @@ app.use('/api/users', require('./controllers/users'))
 
 const { Player, addPlayer, removePlayer } = require('./utils/players')
 let playersWaiting = []
-let roomId2
 
 //______________________________________________________________
 // START SOCKET CONNECTION HERE
