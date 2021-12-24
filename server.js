@@ -7,7 +7,6 @@ const app = express()
 const server = app.listen(process.env.PORT)
 const io = require('socket.io')(server, { cors: true })
 const cors = require('cors')
-
 // Middleware //
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
@@ -47,15 +46,15 @@ io.on('connection', (socket) => {
 		io.emit('players-waiting', playersWaiting)
 	})
 
-	socket.once('enter-poker-room', ({ roomId, currentPlayer }) => {
+	socket.once('enter-poker-room', ({ roomId, player }) => {
 		// Join socket to a given room //
 		socket.join(roomId)
 
 		// Start game after second player joins //
-		if (currentPlayer.id !== roomId) io.to(roomId).emit('start-game')
+		if (player.id !== roomId) io.to(roomId).emit('start-game')
 
 		socket.once('get-players-info', () =>
-			socket.to(roomId).emit('get-players-info', currentPlayer)
+			socket.to(roomId).emit('get-players-info', player)
 		)
 
 		socket.on('deal', () => {
@@ -90,7 +89,7 @@ io.on('connection', (socket) => {
 			io.to(roomId).emit('fold')
 
 			io.to(roomId).emit('hand-results', {
-				losingPlayer: currentPlayer.username,
+				losingPlayer: player.username,
 			})
 		})
 
@@ -98,10 +97,12 @@ io.on('connection', (socket) => {
 
 		socket.on('call', (callAmount) => io.to(roomId).emit('call', callAmount))
 
-		socket.on('bet', ({ betAmount }) => io.to(roomId).emit('bet', betAmount))
+		socket.on('bet', ({ betAmount }) =>
+			io.to(roomId).emit('bet-or-raise', { betAmount })
+		)
 
 		socket.on('raise', ({ callAmount, raiseAmount }) =>
-			io.to(roomId).emit('raise', {
+			io.to(roomId).emit('bet-or-raise', {
 				callAmount,
 				raiseAmount,
 			})
@@ -114,7 +115,7 @@ io.on('connection', (socket) => {
 		socket.on('showdown', (holeCards) =>
 			// Send opponents name and holeCards to other player //
 			socket.to(roomId).emit('determine-winner', {
-				username: currentPlayer.username,
+				username: player.username,
 				holeCards,
 			})
 		)
@@ -134,7 +135,7 @@ io.on('connection', (socket) => {
 
 				if (playerOnesHandObj.handValue > playerTwosHandObj.handValue) {
 					// Current player wins //
-					winningPlayer = currentPlayer.username
+					winningPlayer = player.username
 					winningHand = playerOnesHandObj.handType
 				} else if (playerOnesHandObj.handValue < playerTwosHandObj.handValue) {
 					// Oponnent wins //
@@ -158,7 +159,7 @@ io.on('connection', (socket) => {
 		socket.on('send-chat-message', (message, clearMessage) => {
 			// Send messages to current users room
 			io.to(roomId).emit('chat-message', {
-				user: currentPlayer.username,
+				user: player.username,
 				text: message,
 			})
 
