@@ -4,7 +4,8 @@
 	"description": "Heads-Up Texas Hold'em",
 	"main": "server.js",
 	"scripts": {
-		"dev": "nodemon server"
+		"dev": "nodemon server",
+		"production": "node server"
 	},
 	"repository": {
 		"type": "git",
