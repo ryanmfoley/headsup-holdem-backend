@@ -3,6 +3,9 @@
 	"version": "1.0.0",
 	"description": "Heads-Up Texas Hold'em",
 	"main": "server.js",
+	"engines": {
+		"node": ">=12.16.1 <14.0.0"
+	},
 	"scripts": {
 		"dev": "nodemon server",
 		"production": "node server"
