@@ -212,7 +212,9 @@ class Dealer {
 
 	isHighCard(hand) {
 		// Create array of card values //
-		const stringCardValues = hand.map(({ value }) => value)
+		const stringCardValues = hand
+			.sort((a, b) => b.value - a.value)
+			.map(({ value }) => value)
 
 		const handType = 'High Card'
 
@@ -263,10 +265,9 @@ class Dealer {
 				return acc
 			} else {
 				bestHand.handType = handType
-
 				return handValue
 			}
-		})
+		}, 0)
 
 		bestHand.handValue = bestHandValue
 

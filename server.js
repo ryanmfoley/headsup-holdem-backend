@@ -7,6 +7,7 @@ const app = express()
 const server = app.listen(process.env.PORT)
 const io = require('socket.io')(server, { cors: true })
 const cors = require('cors')
+
 // Middleware //
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
